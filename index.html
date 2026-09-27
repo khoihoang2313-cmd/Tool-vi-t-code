@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PHÒNG TẠO ENGINE C++</title>
+
+<style>
+body{
+    margin:0;
+    font-family:monospace;
+    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:#00ffff;
+    text-align:center;
+}
+h1{
+    text-shadow:0 0 20px #00ffff;
+}
+.panel{
+    width:720px;
+    margin:20px auto;
+    background:#111;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 0 40px #00ffff;
+}
+input,select{
+    background:#000;
+    color:#00ffff;
+    border:1px solid #00ffff;
+    padding:6px;
+    margin:8px;
+    width:130px;
+}
+button{
+    padding:12px 25px;
+    margin:10px;
+    background:#00ffff;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+textarea{
+    width:95%;
+    height:350px;
+    background:#000;
+    color:#00ff00;
+}
+</style>
+</head>
+
+<body>
+
+<h1>⚡ PHÒNG TẠO ENGINE C++ VIP ⚡</h1>
+
+<div class="panel">
+
+Chế độ:
+<select id="preset">
+<option value="fast">Yếu</option>
+<option value="smooth">Mượt</option>
+<option value="pro">Chuyên nghiệp</option>
+</select><br>
+
+Độ nhạy <input type="number" id="sens" value="1.5" step="0.1"><br>
+Độ mượt <input type="number" id="smooth" value="0.08" step="0.01"><br>
+Dự đoán <input type="number" id="pred" value="0.15" step="0.01"><br>
+Giới hạn tốc độ <input type="number" id="max" value="25" step="1"><br>
+Ổn định <input type="number" id="damp" value="0.9" step="0.01"><br>
+Thích nghi <input type="number" id="adaptive" value="0.3" step="0.01"><br>
+
+<button onclick="applyPreset()">Áp dụng chế độ</button>
+<button onclick="generateCode()">Tạo file C++</button>
+<button onclick="downloadFile()">Tải file .cpp</button>
+
+</div>
+
+<textarea id="output"></textarea>
+
+<script>
+
+function applyPreset(){
+let mode=document.getElementById("preset").value;
+
+if(mode==="fast"){
+sens.value=2.0;
+smooth.value=0.12;
+pred.value=0.2;
+max.value=35;
+damp.value=0.85;
+adaptive.value=0.2;
+}
+
+if(mode==="smooth"){
+sens.value=1.2;
+smooth.value=0.06;
+pred.value=0.12;
+max.value=18;
+damp.value=0.94;
+adaptive.value=0.4;
+}
+
+if(mode==="pro"){
+sens.value=1.6;
+smooth.value=0.08;
+pred.value=0.18;
+max.value=25;
+damp.value=0.9;
+adaptive.value=0.3;
+}
+}
+
+function generateCode(){
+
+let sens=parseFloat(document.getElementById("sens").value);
+let smooth=parseFloat(document.getElementById("smooth").value);
+let pred=parseFloat(document.getElementById("pred").value);
+let max=parseFloat(document.getElementById("max").value);
+let damp=parseFloat(document.getElementById("damp").value);
+let adaptive=parseFloat(document.getElementById("adaptive").value);
+
+let code = `#include <iostream>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+struct Vec2{
+    float x,y;
+    Vec2(float _x=0,float _y=0):x(_x),y(_y){}
+    Vec2 operator+(const Vec2& v)const{return{x+v.x,y+v.y};}
+    Vec2 operator-(const Vec2& v)const{return{x-v.x,y-v.y};}
+    Vec2 operator*(float f)const{return{x*f,y*f};}
+};
+
+struct Config{
+    float sensitivity=${sens}f;
+    float smooth=${smooth}f;
+    float prediction=${pred}f;
+    float maxSpeed=${max}f;
+    float damping=${damp}f;
+    float adaptive=${adaptive}f;
+};
+
+class Engine{
+private:
+    Vec2 aim;
+    Vec2 velocity;
+    Config cfg;
+
+    float clamp(float v,float m){
+        return max(-m,min(v,m));
+    }
+
+public:
+    Engine(const Config& c):cfg(c){}
+
+    Vec2 update(const Vec2& target){
+
+        Vec2 predicted=target+velocity*cfg.prediction;
+
+        Vec2 delta=predicted-aim;
+
+        float distance=sqrt(delta.x*delta.x+delta.y*delta.y);
+        float adaptFactor=1.0f+(distance*cfg.adaptive*0.01f);
+
+        delta.x*=cfg.sensitivity*cfg.smooth*adaptFactor;
+        delta.y*=cfg.sensitivity*cfg.smooth*adaptFactor;
+
+        delta.x=clamp(delta.x,cfg.maxSpeed);
+        delta.y=clamp(delta.y,cfg.maxSpeed);
+
+        velocity=velocity*0.8f+delta*0.2f;
+
+        aim=aim*cfg.damping+(aim+velocity)*(1-cfg.damping);
+
+        return aim;
+    }
+};
+
+int main(){
+
+    Config config;
+    Engine engine(config);
+
+    Vec2 target(120,80);
+
+    for(int i=0;i<300;i++){
+        Vec2 pos=engine.update(target);
+        cout<<"X: "<<pos.x<<" Y: "<<pos.y<<endl;
+    }
+
+    return 0;
+}
+`;
+
+document.getElementById("output").value=code;
+}
+
+function downloadFile(){
+let text=document.getElementById("output").value;
+let blob=new Blob([text],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="engine_vip.cpp";
+a.click();
+}
+
+</script>
+
+</body>
+</html>
